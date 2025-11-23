@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       status: 'pending',
     });
 
-    return NextResponse.json({ sessionId: session.id }, { status: 200 });
+    return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (error: any) {
     console.error('Checkout error:', error);
     return NextResponse.json(

@@ -1,4 +1,4 @@
-import PDFDocument from 'pdfkit';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { IBeat } from '@/models/Beat';
 import { IOrder } from '@/models/Order';
 import { licenseTerms } from './license-terms';
@@ -9,109 +9,120 @@ export const generateLicensePDF = async (
   customerName: string,
   customerEmail: string
 ): Promise<Buffer> => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50 });
-    const buffers: Buffer[] = [];
+  try {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([612, 792]); // Letter size (8.5 x 11 inches)
 
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-      const pdfBuffer = Buffer.concat(buffers);
-      resolve(pdfBuffer);
-    });
-    doc.on('error', reject);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = 750; // Start from top
+
+    const write = (text: string, size: number = 12, isBold: boolean = false, align: 'left' | 'center' | 'right' = 'left') => {
+      const currentFont = isBold ? fontBold : font;
+      let x = 50; // Left margin
+      
+      if (align === 'center') {
+        const textWidth = currentFont.widthOfTextAtSize(text, size);
+        x = (612 - textWidth) / 2;
+      } else if (align === 'right') {
+        const textWidth = currentFont.widthOfTextAtSize(text, size);
+        x = 562 - textWidth; // Right margin at 50
+      }
+
+      page.drawText(text, { 
+        x, 
+        y, 
+        size, 
+        font: currentFont,
+        color: rgb(0, 0, 0),
+      });
+
+      y -= size + 6;
+    };
+
+    // Header
+    write('HEARD MUSIC / YCSYH LICENSE AGREEMENT', 20, true, 'center');
+    write('', 12);
+
+    // License Details
+    write(`License Type: ${order.licenseType}`, 12);
+    write(`Price: £${order.amount}`, 12);
+    write('', 12);
+    write(`Beat Title: ${beat.title}`, 12);
+    write(`Producer: ${beat.producer}`, 12);
+    write(`Publisher: YOU CAN SAY YOU HEARD (YCSYH)`, 12);
+    write(`BPM: ${beat.bpm}`, 12);
+    write(`Key: ${beat.key}`, 12);
+    write('', 12);
+
+    // Customer Information
+    write('Licensee Information:', 14, true);
+    write(`Name: ${customerName}`, 12);
+    write(`Email: ${customerEmail}`, 12);
+    write('', 12);
 
     const terms = licenseTerms[order.licenseType];
 
-    // Header
-    doc.fontSize(20).text('HEARD MUSIC / YCSYH LICENSE AGREEMENT', { align: 'center' });
-    doc.moveDown();
-
-    // License Details
-    doc.fontSize(12);
-    doc.text(`License Type: ${order.licenseType}`, { align: 'left' });
-    doc.text(`Price: £${order.amount}`, { align: 'left' });
-    doc.moveDown();
-    doc.text(`Beat Title: ${beat.title}`, { align: 'left' });
-    doc.text(`Producer: ${beat.producer}`, { align: 'left' });
-    doc.text(`Publisher: YOU CAN SAY YOU HEARD (YCSYH)`, { align: 'left' });
-    doc.text(`BPM: ${beat.bpm}`, { align: 'left' });
-    doc.text(`Key: ${beat.key}`, { align: 'left' });
-    doc.moveDown();
-
-    // Customer Information
-    doc.text('Licensee Information:', { underline: true });
-    doc.text(`Name: ${customerName}`);
-    doc.text(`Email: ${customerEmail}`);
-    doc.moveDown();
-
     // Rights Granted
-    doc.text('Rights Granted:', { underline: true });
-    doc.fontSize(10);
+    write('Rights Granted:', 14, true);
     terms.rights.forEach((right, index) => {
-      doc.text(`${index + 1}. ${right}`, { indent: 20 });
+      write(`${index + 1}. ${right}`, 10);
     });
-    doc.moveDown();
+    write('', 12);
 
     // Restrictions
-    if (terms.restrictions.length > 0) {
-      doc.fontSize(12);
-      doc.text('Restrictions:', { underline: true });
-      doc.fontSize(10);
+    if (terms.restrictions && terms.restrictions.length > 0) {
+      write('Restrictions:', 14, true);
       terms.restrictions.forEach((restriction, index) => {
-        doc.text(`${index + 1}. ${restriction}`, { indent: 20 });
+        write(`${index + 1}. ${restriction}`, 10);
       });
-      doc.moveDown();
+      write('', 12);
     }
 
     // Publishing Split
-    doc.fontSize(12);
-    doc.text('Publishing Split:', { underline: true });
-    doc.fontSize(10);
-    doc.text(terms.publishing, { indent: 20 });
-    doc.moveDown();
+    write('Publishing Split:', 14, true);
+    write(terms.publishing, 10);
+    write('', 12);
 
     // Credit Requirement
-    doc.fontSize(12);
-    doc.text('Credit Requirement:', { underline: true });
-    doc.fontSize(10);
-    doc.text(terms.credit, { indent: 20 });
-    doc.moveDown();
+    write('Credit Requirement:', 14, true);
+    write(terms.credit, 10);
+    write('', 12);
 
     // Ownership
-    doc.fontSize(12);
-    doc.text('Ownership:', { underline: true });
-    doc.fontSize(10);
+    write('Ownership:', 14, true);
     if (order.licenseType === 'Exclusive') {
-      doc.text('Buyer owns 100% master of the new song.', { indent: 20 });
-      doc.text('Heard Music (YCSYH) retains publishing rights as specified above.', { indent: 20 });
+      write('Buyer owns 100% master of the new song.', 10);
+      write('Heard Music (YCSYH) retains publishing rights as specified above.', 10);
     } else {
-      doc.text('Heard Music retains full ownership of the beat.', { indent: 20 });
-      doc.text('Buyer receives usage rights only as specified in this agreement.', { indent: 20 });
+      write('Heard Music retains full ownership of the beat.', 10);
+      write('Buyer receives usage rights only as specified in this agreement.', 10);
     }
-    doc.moveDown();
+    write('', 12);
 
     // General Terms
-    doc.fontSize(12);
-    doc.text('General Terms:', { underline: true });
-    doc.fontSize(10);
-    doc.text('1. This license is non-transferable and applies only to the original purchaser.', { indent: 20 });
-    doc.text('2. The licensee may not resell, lease, or transfer this license to any third party.', { indent: 20 });
-    doc.text('3. Compositions must be registered with PRS only when songs are released.', { indent: 20 });
-    doc.text('4. All uses must include proper credit as specified above.', { indent: 20 });
+    write('General Terms:', 14, true);
+    write('1. This license is non-transferable and applies only to the original purchaser.', 10);
+    write('2. The licensee may not resell, lease, or transfer this license to any third party.', 10);
+    write('3. Compositions must be registered with PRS only when songs are released.', 10);
+    write('4. All uses must include proper credit as specified above.', 10);
     if (order.licenseType !== 'Exclusive') {
-      doc.text('5. This is a non-exclusive license. The beat may be licensed to other artists.', { indent: 20 });
+      write('5. This is a non-exclusive license. The beat may be licensed to other artists.', 10);
     }
-    doc.moveDown();
+    write('', 12);
 
     // Date and Signature
-    doc.fontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, { align: 'left' });
-    doc.text(`Order ID: ${order._id.toString()}`, { align: 'left' });
-    doc.moveDown(2);
-    doc.text('YOU CAN SAY YOU HEARD (YCSYH)', { align: 'right' });
-    doc.text('Heard Music', { align: 'right' });
+    write(`Date: ${new Date().toLocaleDateString()}`, 12);
+    write(`Order ID: ${order._id.toString()}`, 12);
+    write('', 12);
+    write('YOU CAN SAY YOU HEARD (YCSYH)', 12, false, 'right');
+    write('Heard Music', 12, false, 'right');
 
-    doc.end();
-  });
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  } catch (error) {
+    console.error('Error creating PDF document:', error);
+    throw error;
+  }
 };
-

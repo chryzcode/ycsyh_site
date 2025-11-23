@@ -3,12 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { loadStripe } from '@stripe/stripe-js';
 import { IBeat } from '@/models/Beat';
 import { licenseTerms } from '@/lib/license-terms';
 import Toast, { ToastType } from '@/components/Toast';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function BeatDetailPage() {
   const params = useParams();
@@ -80,9 +77,11 @@ export default function BeatDetailPage() {
         return;
       }
 
-      const stripe = await stripePromise;
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        showToast('Failed to get checkout URL. Please try again.', 'error');
+        setCheckoutLoading(false);
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -154,12 +153,29 @@ export default function BeatDetailPage() {
                 </div>
               )}
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-              <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
-              <p className="text-gray-600 font-medium">Preview available after purchase</p>
-              <p className="text-sm text-gray-500 mt-1">Purchase a license to download and use this beat</p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2 font-medium">Preview</p>
+              {beat.previewUrl ? (
+                <audio 
+                  controls 
+                  className="w-full"
+                  controlsList="nodownload noplaybackrate"
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  <source src={beat.previewUrl} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              ) : (
+                <div className="text-center py-4">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  <p className="text-gray-500 text-sm">Preview not available</p>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Purchase a license to download the full beat files (MP3, WAV, Trackouts)
+              </p>
             </div>
           </div>
 

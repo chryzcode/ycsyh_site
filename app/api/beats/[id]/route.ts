@@ -15,9 +15,19 @@ export async function GET(
       return NextResponse.json({ error: 'Beat not found' }, { status: 404 });
     }
     
-    // Remove file URLs from response - users shouldn't access files without paying
+    // Remove download file URLs from response - users shouldn't access files without paying
+    // Keep previewUrl for preview, or use mp3Url as preview
     // Also remove exclusivePrice if it's 0 or not set
-    const { mp3Url, wavUrl, trackoutsUrl, ...beatWithoutFiles } = beat as any;
+    const { wavUrl, trackoutsUrl, ...beatWithoutFiles } = beat as any;
+    
+    // Use mp3Url as previewUrl if previewUrl doesn't exist
+    // This allows users to preview before purchase
+    if (!beatWithoutFiles.previewUrl && beatWithoutFiles.mp3Url) {
+      beatWithoutFiles.previewUrl = beatWithoutFiles.mp3Url;
+    }
+    
+    // Remove mp3Url from response (users get it via email after purchase)
+    delete beatWithoutFiles.mp3Url;
     
     // Remove exclusivePrice if it's 0 or undefined
     if (!beatWithoutFiles.exclusivePrice || beatWithoutFiles.exclusivePrice === 0) {

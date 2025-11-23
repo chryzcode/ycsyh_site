@@ -9,15 +9,15 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 to-black/40"></div>
         <div className="relative z-10 text-center px-4">
           <div className="mb-12 flex flex-col items-center">
-            <Image
+        <Image
               src="/publishing_company_logo.jpg"
               alt="YCSYH"
               width={600}
               height={240}
               className="h-40 md:h-56 w-auto object-contain"
-              priority
+          priority
               unoptimized
-            />
+        />
           </div>
           <p className="text-xl md:text-2xl mb-8 text-gray-300 max-w-2xl mx-auto">
             Premium beats for artists worldwide. Quality production, professional service.
@@ -25,7 +25,7 @@ export default function Home() {
           <Link
             href="/beats"
             className="inline-block bg-white text-black px-8 py-4 rounded-full font-semibold hover:bg-gray-200 transition-colors"
-          >
+            >
             Browse Beats
           </Link>
         </div>

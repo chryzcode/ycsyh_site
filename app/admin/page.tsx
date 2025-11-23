@@ -30,6 +30,7 @@ export default function AdminPage() {
     exclusivePrice: 0,
     description: '',
     imageUrl: '',
+    previewUrl: '',
     mp3Url: '',
     wavUrl: '',
     trackoutsUrl: '',
@@ -121,6 +122,7 @@ export default function AdminPage() {
       exclusivePrice: beat.exclusivePrice || 0,
       description: beat.description || '',
       imageUrl: beat.imageUrl || '',
+      previewUrl: beat.previewUrl || '',
       mp3Url: beat.mp3Url,
       wavUrl: beat.wavUrl || '',
       trackoutsUrl: beat.trackoutsUrl || '',
@@ -181,6 +183,7 @@ export default function AdminPage() {
       exclusivePrice: 0,
       description: '',
       imageUrl: '',
+      previewUrl: '',
       mp3Url: '',
       wavUrl: '',
       trackoutsUrl: '',
@@ -346,6 +349,14 @@ export default function AdminPage() {
                     value={formData.imageUrl}
                     onChange={(url) => setFormData({ ...formData, imageUrl: url })}
                     accept="image/*"
+                  />
+                </div>
+                <div>
+                  <FileUpload
+                    label="Preview Audio (30 sec) - Optional"
+                    value={formData.previewUrl}
+                    onChange={(url) => setFormData({ ...formData, previewUrl: url })}
+                    accept="audio/mpeg,audio/mp3"
                   />
                 </div>
                 <div>

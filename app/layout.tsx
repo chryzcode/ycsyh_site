@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased`}>
         <Navbar />
         <main className="pt-16 min-h-screen">
-          {children}
+        {children}
         </main>
         <Footer />
       </body>

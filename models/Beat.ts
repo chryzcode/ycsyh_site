@@ -12,6 +12,7 @@ export interface IBeat extends Document {
   exclusivePrice?: number;
   description?: string;
   imageUrl?: string;
+  previewUrl?: string;
   mp3Url: string;
   wavUrl?: string;
   trackoutsUrl?: string;
@@ -74,6 +75,9 @@ const BeatSchema: Schema = new Schema(
       trim: true,
     },
     imageUrl: {
+      type: String,
+    },
+    previewUrl: {
       type: String,
     },
     mp3Url: {

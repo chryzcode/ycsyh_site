@@ -8,18 +8,58 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    // You can verify the session here if needed
     if (sessionId) {
+      checkOrderStatus();
+    } else {
       setLoading(false);
     }
   }, [sessionId]);
 
-  if (loading) {
+  const checkOrderStatus = async () => {
+    if (!sessionId) return;
+    
+    setChecking(true);
+    try {
+      // First, try to process the order (this will work even if webhook hasn't fired)
+      const processRes = await fetch('/api/orders/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (processRes.ok) {
+        const processData = await processRes.json();
+        setOrderData(processData.order);
+        setLoading(false);
+        setChecking(false);
+        return;
+      }
+
+      // If processing failed, try to get existing order status
+      const res = await fetch(`/api/orders/session/${sessionId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrderData(data.order);
+      }
+    } catch (error) {
+      console.error('Error checking order:', error);
+    } finally {
+      setLoading(false);
+      setChecking(false);
+    }
+  };
+
+  if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Processing...</p>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Processing your order...</p>
+          <p className="text-sm text-gray-400">This may take a few moments</p>
+        </div>
       </div>
     );
   }
@@ -45,9 +85,10 @@ function SuccessContent() {
           </div>
           <h1 className="text-4xl font-bold mb-4">Payment Successful!</h1>
           <p className="text-gray-600 text-lg mb-8">
-            Thank you for your purchase. Your files and license agreement have been sent to your email.
+            Thank you for your purchase. {orderData?.filesDelivered ? 'Your files and license agreement have been sent to your email.' : 'Your order is being processed. You will receive an email shortly with your files and license agreement.'}
           </p>
         </div>
+
 
         <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
           <h2 className="font-semibold mb-4">What's Next?</h2>
@@ -57,6 +98,19 @@ function SuccessContent() {
             <li>✓ Review your license agreement PDF</li>
             <li>✓ Start creating your music!</li>
           </ul>
+          {!orderData?.filesDelivered && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                If you don't receive the email within a few minutes, please check your spam folder or contact us.
+              </p>
+              <button
+                onClick={checkOrderStatus}
+                className="mt-2 text-sm text-blue-600 hover:underline"
+              >
+                Check Order Status Again
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4 justify-center">
