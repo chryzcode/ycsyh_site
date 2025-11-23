@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Toast, { ToastType } from './Toast';
 
 interface FileUploadProps {
   label: string;
@@ -11,6 +12,19 @@ interface FileUploadProps {
 
 export default function FileUpload({ label, value, onChange, accept }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false,
+  });
+
+  const showToast = (message: string, type: ToastType = 'error') => {
+    setToast({ message, type, isVisible: true });
+  };
+
+  const hideToast = () => {
+    setToast({ ...toast, isVisible: false });
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,12 +43,13 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       const data = await res.json();
       if (data.url) {
         onChange(data.url);
+        showToast('File uploaded successfully!', 'success');
       } else {
-        alert('Upload failed. Please try again.');
+        showToast('Upload failed. Please try again.', 'error');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload failed. Please try again.');
+      showToast('Upload failed. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
@@ -71,6 +86,12 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       {value && (
         <p className="text-xs text-gray-500 mt-1 truncate">{value}</p>
       )}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   );
 }

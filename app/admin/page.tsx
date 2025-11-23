@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IBeat } from '@/models/Beat';
 import FileUpload from '@/components/FileUpload';
+import Toast, { ToastType } from '@/components/Toast';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -12,6 +13,12 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingBeat, setEditingBeat] = useState<IBeat | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false,
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     category: 'Drill',
@@ -64,27 +71,40 @@ export default function AdminPage() {
     }
   };
 
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ message, type, isVisible: true });
+  };
+
+  const hideToast = () => {
+    setToast({ ...toast, isVisible: false });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingBeat) {
-        await fetch(`/api/beats/${editingBeat._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-      } else {
-        await fetch('/api/beats', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
+      const res = editingBeat
+        ? await fetch(`/api/beats/${editingBeat._id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          })
+        : await fetch('/api/beats', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save beat');
       }
+
       fetchBeats();
       resetForm();
-    } catch (error) {
+      showToast(editingBeat ? 'Beat updated successfully!' : 'Beat created successfully!', 'success');
+    } catch (error: any) {
       console.error('Error saving beat:', error);
-      alert('Failed to save beat');
+      showToast(error.message || 'Failed to save beat', 'error');
     }
   };
 
@@ -110,26 +130,42 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this beat?')) return;
+    setDeleteConfirm(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
     try {
-      await fetch(`/api/beats/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/beats/${deleteConfirm}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete beat');
+      }
       fetchBeats();
-    } catch (error) {
+      setDeleteConfirm(null);
+      showToast('Beat deleted successfully!', 'success');
+    } catch (error: any) {
       console.error('Error deleting beat:', error);
-      alert('Failed to delete beat');
+      showToast(error.message || 'Failed to delete beat', 'error');
+      setDeleteConfirm(null);
     }
   };
 
   const toggleSold = async (beat: IBeat) => {
     try {
-      await fetch(`/api/beats/${beat._id}`, {
+      const res = await fetch(`/api/beats/${beat._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isSold: !beat.isSold }),
       });
+      if (!res.ok) {
+        throw new Error('Failed to update beat status');
+      }
       fetchBeats();
+      showToast(`Beat marked as ${!beat.isSold ? 'sold' : 'available'}!`, 'success');
     } catch (error) {
       console.error('Error updating beat:', error);
+      showToast('Failed to update beat status', 'error');
     }
   };
 
@@ -417,13 +453,13 @@ export default function AdminPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
                         onClick={() => handleEdit(beat)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(beat._id.toString())}
-                        className="text-red-600 hover:text-red-900"
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                       >
                         Delete
                       </button>
@@ -434,6 +470,40 @@ export default function AdminPage() {
             </table>
           </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete this beat? This action cannot be undone.
+              </p>
+              <div className="flex gap-4 justify-end">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={hideToast}
+        />
       </div>
     </div>
   );

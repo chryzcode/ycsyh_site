@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { loadStripe } from '@stripe/stripe-js';
 import { IBeat } from '@/models/Beat';
 import { licenseTerms } from '@/lib/license-terms';
+import Toast, { ToastType } from '@/components/Toast';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -18,6 +19,11 @@ export default function BeatDetailPage() {
   const [selectedLicense, setSelectedLicense] = useState<'MP3 Lease' | 'WAV Lease' | 'Trackout Lease' | 'Exclusive' | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false,
+  });
 
   useEffect(() => {
     if (params.id) {
@@ -37,12 +43,20 @@ export default function BeatDetailPage() {
     }
   };
 
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToast({ message, type, isVisible: true });
+  };
+
+  const hideToast = () => {
+    setToast({ ...toast, isVisible: false });
+  };
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!beat || !selectedLicense) return;
 
-    if (selectedLicense === 'Exclusive' && !beat.exclusivePrice) {
-      alert('Exclusive license not available. Please contact for pricing.');
+    if (selectedLicense === 'Exclusive' && (!beat.exclusivePrice || beat.exclusivePrice === 0)) {
+      showToast('Exclusive license not available. Please contact for pricing.', 'warning');
       return;
     }
 
@@ -61,7 +75,8 @@ export default function BeatDetailPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to initiate checkout. Please try again.');
+        showToast(data.error || 'Failed to initiate checkout. Please try again.', 'error');
+        setCheckoutLoading(false);
         return;
       }
 
@@ -71,8 +86,7 @@ export default function BeatDetailPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to initiate checkout. Please try again.');
-    } finally {
+      showToast('Failed to initiate checkout. Please try again.', 'error');
       setCheckoutLoading(false);
     }
   };
@@ -97,7 +111,7 @@ export default function BeatDetailPage() {
     if (licenseType === 'MP3 Lease') return beat.mp3Price;
     if (licenseType === 'WAV Lease') return beat.wavPrice;
     if (licenseType === 'Trackout Lease') return beat.trackoutPrice;
-    if (licenseType === 'Exclusive') return beat.exclusivePrice || 0;
+    if (licenseType === 'Exclusive') return (beat.exclusivePrice && beat.exclusivePrice > 0) ? beat.exclusivePrice : 0;
     return 0;
   };
 
@@ -140,12 +154,13 @@ export default function BeatDetailPage() {
                 </div>
               )}
             </div>
-            {beat.mp3Url && (
-              <audio controls className="w-full">
-                <source src={beat.mp3Url} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            )}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p className="text-gray-600 font-medium">Preview available after purchase</p>
+              <p className="text-sm text-gray-500 mt-1">Purchase a license to download and use this beat</p>
+            </div>
           </div>
 
           {/* Beat Info & Checkout */}
@@ -196,7 +211,7 @@ export default function BeatDetailPage() {
                     );
                   })}
                   
-                  {beat.exclusivePrice && (
+                  {beat.exclusivePrice && beat.exclusivePrice > 0 && (
                     <button
                       onClick={() => setSelectedLicense('Exclusive')}
                       className={`w-full text-left p-4 border-2 rounded-lg transition-colors ${
@@ -258,10 +273,14 @@ export default function BeatDetailPage() {
                   </div>
                   <button
                     type="submit"
-                    disabled={checkoutLoading || !selectedLicense}
+                    disabled={checkoutLoading || !selectedLicense || (selectedLicense === 'Exclusive' && (!beat.exclusivePrice || beat.exclusivePrice === 0))}
                     className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {checkoutLoading ? 'Processing...' : selectedLicense ? `Purchase ${selectedLicense} - £${getPrice(selectedLicense)}` : 'Select a License'}
+                    {checkoutLoading 
+                      ? 'Processing...' 
+                      : selectedLicense && getPrice(selectedLicense) > 0
+                        ? `Purchase ${selectedLicense} - £${getPrice(selectedLicense)}`
+                        : 'Select a License'}
                   </button>
                 </form>
               </div>
@@ -269,6 +288,14 @@ export default function BeatDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   );
 }

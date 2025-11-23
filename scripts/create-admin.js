@@ -6,7 +6,20 @@
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-require('dotenv').config({ path: '.env.local' });
+const path = require('path');
+const fs = require('fs');
+
+// Try to load .env.local first, then .env
+const envLocalPath = path.join(__dirname, '..', '.env.local');
+const envPath = path.join(__dirname, '..', '.env');
+
+if (fs.existsSync(envLocalPath)) {
+  require('dotenv').config({ path: envLocalPath });
+} else if (fs.existsSync(envPath)) {
+  require('dotenv').config({ path: envPath });
+} else {
+  require('dotenv').config();
+}
 
 const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
@@ -19,8 +32,15 @@ const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 async function createAdmin() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      console.error('❌ Error: MONGODB_URI is not set in your .env or .env.local file');
+      console.error('Please add MONGODB_URI=your_mongodb_connection_string to your .env file');
+      process.exit(1);
+    }
+    
+    await mongoose.connect(mongoUri);
+    console.log('✅ Connected to MongoDB');
 
     const email = process.argv[2] || 'admin@ycsyh.com';
     const password = process.argv[3] || 'admin123';
