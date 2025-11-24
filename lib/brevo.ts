@@ -45,7 +45,8 @@ export const sendEmail = async (
     
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
     
-    const messageId = result.response?.body?.messageId;
+    // Access messageId from the response body (Brevo SDK structure)
+    const messageId = (result as any).body?.messageId || (result as any).response?.body?.messageId;
     console.log('✅ Email sent successfully! Message ID:', messageId);
     return result;
   } catch (error: any) {

@@ -11,7 +11,7 @@ export interface IUser extends Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const UserSchema: Schema = new Schema(
+const UserSchema = new Schema<IUser>(
   {
     email: {
       type: String,
@@ -40,10 +40,11 @@ const UserSchema: Schema = new Schema(
 );
 
 // Hash password before saving
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+UserSchema.pre('save', async function (this: IUser) {
+  if (!this.isModified('password')) {
+    return;
+  }
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 // Compare password method
