@@ -79,10 +79,18 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       xhrRef.current.abort();
     }
 
-    // Use server-side upload for all files to avoid CORS issues
-    // The server handles uploads directly to Cloudinary
+    // For files larger than 4MB, use direct Cloudinary upload to avoid server body size limits
+    // For smaller files, use server-side upload
+    const USE_DIRECT_UPLOAD = file.size > 4 * 1024 * 1024; // 4MB threshold
+
     try {
-      await uploadViaServer(file);
+      if (USE_DIRECT_UPLOAD) {
+        // Direct Cloudinary upload for large files (requires CORS to be enabled in Cloudinary)
+        await uploadDirectToCloudinary(file);
+      } else {
+        // Server-side upload for smaller files
+        await uploadViaServer(file);
+      }
     } catch (error) {
       console.error('Upload error:', error);
       showToast('Upload failed. Please try again.', 'error');
@@ -203,7 +211,13 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       });
 
       xhr.addEventListener('error', () => {
-        showToast('Network error. Please check your connection and try again.', 'error');
+        // Check if it's a CORS error
+        if (xhr.status === 0 && !xhr.responseText) {
+          console.error('CORS error detected. Cloudinary CORS must be enabled in dashboard.');
+          showToast('Upload failed: CORS error. Please enable CORS in Cloudinary settings for your domain.', 'error');
+        } else {
+          showToast('Network error. Please check your connection and try again.', 'error');
+        }
         setUploading(false);
         setUploadProgress(0);
         xhrRef.current = null;
