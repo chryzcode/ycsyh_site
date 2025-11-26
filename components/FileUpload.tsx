@@ -79,17 +79,10 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       xhrRef.current.abort();
     }
 
-    // For files larger than 4MB, use direct Cloudinary upload to avoid server body size limits
-    const USE_DIRECT_UPLOAD = file.size > 4 * 1024 * 1024; // 4MB threshold
-
+    // Use server-side upload for all files to avoid CORS issues
+    // The server handles uploads directly to Cloudinary
     try {
-      if (USE_DIRECT_UPLOAD) {
-        // Direct Cloudinary upload for large files
-        await uploadDirectToCloudinary(file);
-      } else {
-        // Server-side upload for smaller files
-        await uploadViaServer(file);
-      }
+      await uploadViaServer(file);
     } catch (error) {
       console.error('Upload error:', error);
       showToast('Upload failed. Please try again.', 'error');
