@@ -12,10 +12,10 @@ interface FileUploadProps {
 
 // Maximum file sizes (in bytes) - matches backend
 const MAX_FILE_SIZES = {
-  image: 10 * 1024 * 1024, // 10MB
-  audio: 100 * 1024 * 1024, // 100MB
-  zip: 200 * 1024 * 1024, // 200MB
-  default: 100 * 1024 * 1024, // 100MB
+  image: 500 * 1024 * 1024, // 500MB
+  audio: 500 * 1024 * 1024, // 500MB
+  zip: 500 * 1024 * 1024, // 500MB
+  default: 500 * 1024 * 1024, // 500MB
 };
 
 function getMaxFileSize(fileType: string): number {
