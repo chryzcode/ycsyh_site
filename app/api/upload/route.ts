@@ -8,10 +8,10 @@ export const maxDuration = 60;
 
 // Maximum file sizes (in bytes)
 const MAX_FILE_SIZES = {
-  image: 100 * 1024 * 1024, // 100MB for images
-  audio: 100 * 1024 * 1024, // 100MB for audio files
-  zip: 100 * 1024 * 1024, // 100MB for ZIP files
-  default: 100 * 1024 * 1024, // 100MB default
+  image: 200 * 1024 * 1024, // 200MB for images
+  audio: 200 * 1024 * 1024, // 200MB for audio files
+  zip: 200 * 1024 * 1024, // 200MB for ZIP files
+  default: 200 * 1024 * 1024, // 200MB default
 };
 
 function getMaxFileSize(fileType: string): number {
