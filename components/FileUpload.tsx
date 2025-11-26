@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Toast, { ToastType } from './Toast';
 
 interface FileUploadProps {
@@ -10,8 +10,36 @@ interface FileUploadProps {
   accept?: string;
 }
 
+// Maximum file sizes (in bytes) - matches backend
+const MAX_FILE_SIZES = {
+  image: 10 * 1024 * 1024, // 10MB
+  audio: 100 * 1024 * 1024, // 100MB
+  zip: 200 * 1024 * 1024, // 200MB
+  default: 100 * 1024 * 1024, // 100MB
+};
+
+function getMaxFileSize(fileType: string): number {
+  if (fileType.startsWith('image/')) return MAX_FILE_SIZES.image;
+  if (fileType.startsWith('audio/')) return MAX_FILE_SIZES.audio;
+  if (fileType.includes('zip') || fileType.includes('application/zip')) return MAX_FILE_SIZES.zip;
+  return MAX_FILE_SIZES.default;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
 export default function FileUpload({ label, value, onChange, accept }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileName, setFileName] = useState<string>('');
+  const [fileSize, setFileSize] = useState<number>(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
     message: '',
     type: 'info',
@@ -30,28 +58,100 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size before upload
+    const maxSize = getMaxFileSize(file.type);
+    if (file.size > maxSize) {
+      const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+      showToast(`File size exceeds maximum allowed size of ${maxSizeMB}MB`, 'error');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    setFileName(file.name);
+    setFileSize(file.size);
     setUploading(true);
+    setUploadProgress(0);
+
+    // Cancel any existing upload
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+    }
+
     try {
+      // Use XMLHttpRequest for progress tracking
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          setUploadProgress(percentComplete);
+        }
       });
 
-      const data = await res.json();
-      if (data.url) {
-        onChange(data.url);
-        showToast('File uploaded successfully!', 'success');
-      } else {
-        showToast('Upload failed. Please try again.', 'error');
-      }
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.url) {
+              onChange(data.url);
+              showToast('File uploaded successfully!', 'success');
+              setUploadProgress(100);
+            } else {
+              showToast(data.error || 'Upload failed. Please try again.', 'error');
+            }
+          } catch (parseError) {
+            showToast('Failed to parse server response.', 'error');
+          }
+        } else {
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            showToast(errorData.error || 'Upload failed. Please try again.', 'error');
+          } catch {
+            showToast(`Upload failed with status ${xhr.status}`, 'error');
+          }
+        }
+        setUploading(false);
+        xhrRef.current = null;
+      });
+
+      xhr.addEventListener('error', () => {
+        showToast('Network error. Please check your connection and try again.', 'error');
+        setUploading(false);
+        setUploadProgress(0);
+        xhrRef.current = null;
+      });
+
+      xhr.addEventListener('abort', () => {
+        setUploading(false);
+        setUploadProgress(0);
+        xhrRef.current = null;
+      });
+
+      xhr.open('POST', '/api/upload');
+      xhr.send(formData);
     } catch (error) {
       console.error('Upload error:', error);
       showToast('Upload failed. Please try again.', 'error');
-    } finally {
       setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleCancel = () => {
+    if (xhrRef.current) {
+      xhrRef.current.abort();
+      xhrRef.current = null;
+    }
+    setUploading(false);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -60,6 +160,7 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
       <label className="block text-sm font-medium mb-2">{label}</label>
       <div className="flex gap-2">
         <input
+          ref={fileInputRef}
           type="file"
           accept={accept}
           onChange={handleFileChange}
@@ -69,11 +170,22 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
         />
         <label
           htmlFor={`file-${label.replace(/\s+/g, '-')}`}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 text-center disabled:opacity-50"
+          className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 text-center transition-colors ${
+            uploading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           {uploading ? 'Uploading...' : value ? 'Change File' : 'Choose File'}
         </label>
-        {value && (
+        {uploading && (
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+        {value && !uploading && (
           <input
             type="text"
             value={value}
@@ -83,7 +195,29 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
           />
         )}
       </div>
-      {value && (
+      
+      {/* Upload Progress */}
+      {uploading && (
+        <div className="mt-2">
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>{fileName}</span>
+            <span>{uploadProgress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+          {fileSize > 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              {formatFileSize(fileSize)}
+            </p>
+          )}
+        </div>
+      )}
+      
+      {value && !uploading && (
         <p className="text-xs text-gray-500 mt-1 truncate">{value}</p>
       )}
       <Toast
