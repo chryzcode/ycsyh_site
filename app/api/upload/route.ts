@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import cloudinary from '@/lib/cloudinary';
 import { requireAdmin } from '@/lib/auth';
 
+// Runtime configuration for App Router
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 // Maximum file sizes (in bytes)
 const MAX_FILE_SIZES = {
   image: 10 * 1024 * 1024, // 10MB for images
@@ -16,6 +20,10 @@ function getMaxFileSize(fileType: string): number {
   if (fileType.includes('zip') || fileType.includes('application/zip')) return MAX_FILE_SIZES.zip;
   return MAX_FILE_SIZES.default;
 }
+
+// Runtime configuration for App Router
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const adminCheck = await requireAdmin(request);
