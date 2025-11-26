@@ -37,7 +37,7 @@ export const sendEmail = async (
   }
 
   try {
-    console.log('📧 Sending email via Brevo...');
+    console.log('Sending email via Brevo...');
     console.log('   To:', to);
     console.log('   Subject:', subject);
     console.log('   Sender:', sendSmtpEmail.sender.email);
@@ -47,10 +47,10 @@ export const sendEmail = async (
     
     // Access messageId from the response body (Brevo SDK structure)
     const messageId = (result as any).body?.messageId || (result as any).response?.body?.messageId;
-    console.log('✅ Email sent successfully! Message ID:', messageId);
+    console.log('Email sent successfully! Message ID:', messageId);
     return result;
   } catch (error: any) {
-    console.error('❌ Error sending email via Brevo:');
+    console.error('Error sending email via Brevo:');
     console.error('   Error message:', error.message);
     console.error('   Error code:', error.code);
     if (error.response) {

@@ -27,7 +27,7 @@ This will create a default admin user:
 ### Method 2: Custom Email/Password
 
 ```bash
-node scripts/create-admin.js alabaolanrewaju13@gmail.com testpass123 "Alaba Ola"
+node scripts/create-admin.js email password "name"
 ```
 
 ### Method 3: Direct MongoDB

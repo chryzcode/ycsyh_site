@@ -2,6 +2,8 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { IBeat } from '@/models/Beat';
 import { IOrder } from '@/models/Order';
 import { licenseTerms } from './license-terms';
+import fs from 'fs';
+import path from 'path';
 
 export const generateLicensePDF = async (
   order: IOrder,
@@ -11,14 +13,51 @@ export const generateLicensePDF = async (
 ): Promise<Buffer> => {
   try {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([612, 792]); // Letter size (8.5 x 11 inches)
+    let page = pdfDoc.addPage([612, 792]); // Letter size (8.5 x 11 inches)
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let y = 750; // Start from top
+    // Embed logo image
+    let logoBottomY = 750; // Default to top if no logo
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'publishing_company_logo.jpg');
+      const logoBytes = fs.readFileSync(logoPath);
+      const logoImage = await pdfDoc.embedJpg(logoBytes);
+      
+      // Draw logo at the top center (very small scale for header)
+      const scale = 0.06; // Much smaller logo
+      const logoDims = logoImage.scale(scale);
+      const logoWidth = logoDims.width;
+      const logoHeight = logoDims.height;
+      const logoX = (612 - logoWidth) / 2; // Center horizontally
+      const topMargin = 10;
+      const logoY = 750 - topMargin - logoHeight; // Y position (bottom-left of image in pdf-lib)
+      logoBottomY = logoY; // Bottom of logo (where image starts)
+      
+      page.drawImage(logoImage, {
+        x: logoX,
+        y: logoY,
+        width: logoWidth,
+        height: logoHeight,
+      });
+    } catch (logoError) {
+      console.warn('Could not load logo for PDF:', logoError);
+      // Continue without logo if file not found
+    }
+
+    // Start text with adequate spacing below logo (30 points spacing to prevent overlap)
+    const textSpacing = 30;
+    let y = logoBottomY - textSpacing;
+    const bottomMargin = 50; // Minimum Y position before adding new page
 
     const write = (text: string, size: number = 12, isBold: boolean = false, align: 'left' | 'center' | 'right' = 'left') => {
+      // Check if we need a new page
+      if (y < bottomMargin) {
+        page = pdfDoc.addPage([612, 792]);
+        y = 750; // Reset to top of new page
+      }
+
       const currentFont = isBold ? fontBold : font;
       let x = 50; // Left margin
       

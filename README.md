@@ -4,15 +4,15 @@ A modern e-commerce platform for selling beats with automatic file delivery, PDF
 
 ## Features
 
-- ✅ Auto file delivery (MP3/WAV/Trackouts)
-- ✅ Automatic PDF license contracts
-- ✅ Stripe checkout integration
-- ✅ Admin dashboard to upload/edit/delete beats
-- ✅ Cloudinary storage for files
-- ✅ Ability to mark beats as SOLD
-- ✅ Home, Beat Store, About, Publishing pages
-- ✅ Clean, modern, minimal UI design
-- ✅ Brevo email notifications
+- Auto file delivery (MP3/WAV/Trackouts)
+- Automatic PDF license contracts
+- Stripe checkout integration
+- Admin dashboard to upload/edit/delete beats
+- Cloudinary storage for files
+- Ability to mark beats as SOLD
+- Home, Beat Store, About, Publishing pages
+- Clean, modern, minimal UI design
+- Brevo email notifications
 
 ## Tech Stack
 

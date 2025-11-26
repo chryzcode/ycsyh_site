@@ -126,9 +126,9 @@ export async function POST(request: NextRequest) {
           },
         ]
       );
-      console.log('✅ Email sent successfully to:', order.customerEmail);
+      console.log('Email sent successfully to:', order.customerEmail);
     } catch (emailError: any) {
-      console.error('❌ Error sending email:', emailError);
+      console.error('Error sending email:', emailError);
       console.error('Email error details:', {
         message: emailError.message,
         response: emailError.response?.body,
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       },
     }, { status: 200 });
   } catch (error: any) {
-    console.error('❌ Error processing order:', error);
+    console.error('Error processing order:', error);
     console.error('Error stack:', error.stack);
     console.error('Error details:', {
       message: error.message,

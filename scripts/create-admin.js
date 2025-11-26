@@ -34,13 +34,13 @@ async function createAdmin() {
   try {
     const mongoUri = process.env.MONGODB_URI;
     if (!mongoUri) {
-      console.error('❌ Error: MONGODB_URI is not set in your .env or .env.local file');
+      console.error('Error: MONGODB_URI is not set in your .env or .env.local file');
       console.error('Please add MONGODB_URI=your_mongodb_connection_string to your .env file');
       process.exit(1);
     }
     
     await mongoose.connect(mongoUri);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     const email = process.argv[2] || 'admin@ycsyh.com';
     const password = process.argv[3] || 'admin123';
@@ -53,7 +53,7 @@ async function createAdmin() {
       existingUser.admin = true;
       existingUser.password = await bcrypt.hash(password, 12);
       await existingUser.save();
-      console.log('✅ Admin user updated successfully!');
+      console.log('Admin user updated successfully!');
       console.log(`Email: ${email}`);
       console.log(`Password: ${password}`);
       process.exit(0);
@@ -68,10 +68,10 @@ async function createAdmin() {
       admin: true,
     });
 
-    console.log('✅ Admin user created successfully!');
+    console.log('Admin user created successfully!');
     console.log(`Email: ${email}`);
     console.log(`Password: ${password}`);
-    console.log('\n⚠️  Please change the password after first login!');
+    console.log('\nPlease change the password after first login!');
     
     process.exit(0);
   } catch (error) {
