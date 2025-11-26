@@ -21,10 +21,6 @@ function getMaxFileSize(fileType: string): number {
   return MAX_FILE_SIZES.default;
 }
 
-// Runtime configuration for App Router
-export const runtime = 'nodejs';
-export const maxDuration = 60;
-
 export async function POST(request: NextRequest) {
   const adminCheck = await requireAdmin(request);
   if ('error' in adminCheck) {
