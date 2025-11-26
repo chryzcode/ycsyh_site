@@ -100,8 +100,8 @@ export default function Footer() {
             <p className="text-sm text-gray-400">
               For inquiries and licensing:
               <br />
-              <a href="mailto:heardmusicproductions@gmail.com" className="hover:text-white">
-                heardmusicproductions@gmail.com
+              <a href="mailto:YCSYHeard@gmail.com" className="hover:text-white">
+                YCSYHeard@gmail.com
               </a>
             </p>
           </div>

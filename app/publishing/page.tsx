@@ -119,8 +119,8 @@ export default function PublishingPage() {
               For publishing inquiries, exclusive licenses, or custom production:
             </p>
             <p className="text-gray-700">
-              <a href="mailto:heardmusicproductions@gmail.com" className="text-black hover:underline font-medium">
-                heardmusicproductions@gmail.com
+              <a href="mailto:YCSYHeard@gmail.com" className="text-black hover:underline font-medium">
+                YCSYHeard@gmail.com
               </a>
             </p>
           </section>
