@@ -8,7 +8,7 @@ A modern e-commerce platform for selling beats with automatic file delivery, PDF
 - Automatic PDF license contracts
 - Stripe checkout integration
 - Admin dashboard to upload/edit/delete beats
-- Cloudinary storage for files
+- UploadThing storage for files
 - Ability to mark beats as SOLD
 - Home, Beat Store, About, Publishing pages
 - Clean, modern, minimal UI design
@@ -19,7 +19,7 @@ A modern e-commerce platform for selling beats with automatic file delivery, PDF
 - **Next.js 16** - React framework
 - **TypeScript** - Type safety
 - **MongoDB** - Database
-- **Cloudinary** - File storage
+- **UploadThing** - File storage
 - **Stripe** - Payment processing
 - **Brevo** - Email service
 - **Tailwind CSS** - Styling
@@ -31,7 +31,7 @@ A modern e-commerce platform for selling beats with automatic file delivery, PDF
 - Node.js 18+ installed
 - MongoDB database (local or Atlas)
 - Stripe account
-- Cloudinary account
+- UploadThing account
 - Brevo account
 
 ### Installation
@@ -54,9 +54,8 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
 - `STRIPE_SECRET_KEY` - Stripe secret key
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
-- `CLOUDINARY_API_KEY` - Cloudinary API key
-- `CLOUDINARY_API_SECRET` - Cloudinary API secret
+- `UPLOADTHING_SECRET` - UploadThing secret key
+- `UPLOADTHING_APP_ID` - UploadThing app ID
 - `BREVO_API_KEY` - Brevo API key
 - `BREVO_SENDER_EMAIL` - Your sender email address
 - `JWT_SECRET` - Secret key for JWT tokens (generate a random string)
@@ -69,7 +68,7 @@ npm run create-admin
 node scripts/create-admin.js admin@ycsyh.com yourpassword "Admin Name"
 ```
 
-**Note:** Upload presets are NOT required. The upload API will work without them.
+**Note:** UploadThing handles file uploads automatically. No additional configuration needed.
 
 5. Set up Stripe webhook (Recommended but optional):
 
@@ -95,7 +94,7 @@ Access the admin dashboard at `/admin` to:
 - Edit existing beats
 - Delete beats
 - Mark beats as sold/available
-- Upload files directly to Cloudinary
+- Upload files via UploadThing
 
 ## Project Structure
 
@@ -104,7 +103,7 @@ Access the admin dashboard at `/admin` to:
 │   ├── api/              # API routes
 │   │   ├── beats/        # Beat CRUD operations
 │   │   ├── checkout/     # Stripe checkout
-│   │   ├── upload/       # File upload
+│   │   ├── uploadthing/  # UploadThing file upload
 │   │   └── webhooks/     # Stripe webhooks
 │   ├── admin/            # Admin dashboard
 │   ├── about/            # About page
