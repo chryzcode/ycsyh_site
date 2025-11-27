@@ -183,6 +183,19 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
     }
   };
 
+  const handleRemoveFile = () => {
+    onChange('');
+    setFileName('');
+    setFileSize(0);
+    setUploadProgress(0);
+    setUploadSpeed(0);
+    setTimeRemaining(0);
+    progressHistoryRef.current = [];
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div>
       <label className="block text-sm font-medium mb-2">{label}</label>
@@ -205,13 +218,22 @@ export default function FileUpload({ label, value, onChange, accept }: FileUploa
           {uploading ? 'Uploading...' : value ? 'Change File' : 'Choose File'}
         </label>
         {value && !uploading && (
-          <input
-            type="text"
-            value={value}
-            readOnly
-            className="flex-2 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-            placeholder="File URL"
-          />
+          <>
+            <input
+              type="text"
+              value={value}
+              readOnly
+              className="flex-2 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+              placeholder="File URL"
+            />
+            <button
+              type="button"
+              onClick={handleRemoveFile}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-sm whitespace-nowrap"
+            >
+              Remove
+            </button>
+          </>
         )}
       </div>
       
