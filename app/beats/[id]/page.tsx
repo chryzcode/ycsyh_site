@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { IBeat } from '@/models/Beat';
@@ -10,7 +10,7 @@ import Toast, { ToastType } from '@/components/Toast';
 export default function BeatDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [beat, setBeat] = useState<IBeat | null>(null);
+  const [beat, setBeat] = useState<IBeat & { isUsingMp3AsPreview?: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<'MP3 Lease' | 'WAV Lease' | 'Trackout Lease' | 'Exclusive' | null>(null);
@@ -21,12 +21,62 @@ export default function BeatDetailPage() {
     type: 'info',
     isVisible: false,
   });
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (params.id) {
       fetchBeat();
     }
   }, [params.id]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !beat?.isUsingMp3AsPreview) return;
+
+    const PREVIEW_LIMIT = 35; // 35 seconds
+
+    const handleTimeUpdate = () => {
+      // Limit playback to 35 seconds when using MP3 as preview
+      if (audio.currentTime >= PREVIEW_LIMIT) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
+
+    const handleSeeking = () => {
+      // Prevent seeking past 35 seconds while user is dragging
+      if (audio.currentTime > PREVIEW_LIMIT) {
+        audio.currentTime = PREVIEW_LIMIT;
+      }
+    };
+
+    const handleSeeked = () => {
+      // Ensure we're not past 35 seconds after seeking
+      if (audio.currentTime > PREVIEW_LIMIT) {
+        audio.currentTime = PREVIEW_LIMIT;
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      // Set the maximum seekable time to 35 seconds
+      // This helps prevent seeking past the limit
+      if (audio.duration > PREVIEW_LIMIT) {
+        // Note: We can't directly limit duration, but we'll enforce it via events
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('seeking', handleSeeking);
+    audio.addEventListener('seeked', handleSeeked);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('seeking', handleSeeking);
+      audio.removeEventListener('seeked', handleSeeked);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [beat?.isUsingMp3AsPreview]);
 
   const fetchBeat = async () => {
     try {
@@ -156,15 +206,23 @@ export default function BeatDetailPage() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <p className="text-sm text-gray-600 mb-2 font-medium">Preview</p>
               {beat.previewUrl ? (
-                <audio 
-                  controls 
-                  className="w-full"
-                  controlsList="nodownload noplaybackrate"
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  <source src={beat.previewUrl} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
+                <>
+                  <audio 
+                    ref={audioRef}
+                    controls 
+                    className="w-full"
+                    controlsList="nodownload noplaybackrate"
+                    onContextMenu={(e) => e.preventDefault()}
+                  >
+                    <source src={beat.previewUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                  {beat.isUsingMp3AsPreview && (
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      Preview limited to 35 seconds
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-4">
                   <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

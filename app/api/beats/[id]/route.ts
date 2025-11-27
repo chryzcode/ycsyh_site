@@ -20,10 +20,14 @@ export async function GET(
     // Also remove exclusivePrice if it's 0 or not set
     const { wavUrl, trackoutsUrl, ...beatWithoutFiles } = beat as any;
     
-    // Use mp3Url as previewUrl if previewUrl doesn't exist
-    // This allows users to preview before purchase
+    // If there's a dedicated preview file, use it
+    // Otherwise, use our preview endpoint that serves 35 seconds of the MP3
     if (!beatWithoutFiles.previewUrl && beatWithoutFiles.mp3Url) {
-      beatWithoutFiles.previewUrl = beatWithoutFiles.mp3Url;
+      // Use our preview endpoint that will serve 35 seconds of the MP3
+      beatWithoutFiles.previewUrl = `/api/beats/${id}/preview`;
+      beatWithoutFiles.isUsingMp3AsPreview = true;
+    } else {
+      beatWithoutFiles.isUsingMp3AsPreview = false;
     }
     
     // Remove mp3Url from response (users get it via email after purchase)
