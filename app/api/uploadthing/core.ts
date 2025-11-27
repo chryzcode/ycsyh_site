@@ -1,9 +1,7 @@
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import jwt from 'jsonwebtoken';
 
-const f = createUploadthing({
-  token: process.env.UPLOADTHING_TOKEN,
-});
+const f = createUploadthing();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -47,7 +45,7 @@ async function checkAdmin(req: { headers: Headers }): Promise<void> {
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   // Define as many FileRoutes as you like, each with a unique routeSlug
-  imageUploader: f({ image: { maxFileSize: '200MB', maxFileCount: 1 } })
+  imageUploader: f({ image: { maxFileSize: '256MB', maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       await checkAdmin(req);
@@ -60,7 +58,7 @@ export const ourFileRouter = {
       console.log('file url', file.url);
     }),
 
-  audioUploader: f({ audio: { maxFileSize: '200MB', maxFileCount: 1 } })
+  audioUploader: f({ audio: { maxFileSize: '256MB', maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       await checkAdmin(req);
       return { userId: 'admin' };
@@ -70,7 +68,7 @@ export const ourFileRouter = {
       console.log('file url', file.url);
     }),
 
-  zipUploader: f({ blob: { maxFileSize: '200MB', maxFileCount: 1 } })
+  zipUploader: f({ blob: { maxFileSize: '256MB', maxFileCount: 1 } })
     .middleware(async ({ req }) => {
       await checkAdmin(req);
       return { userId: 'admin' };
