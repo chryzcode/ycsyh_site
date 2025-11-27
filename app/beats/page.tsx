@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import BeatCard from '@/components/BeatCard';
 import { IBeat } from '@/models/Beat';
 
-const categories = ['All', 'Drill', 'UK Rap', 'Jersey Club', 'Cinematic', 'Trap', 'R&B', 'Hip-Hop', 'Other'];
+const categories = ['All', 'Afrobeats', 'Cinematic', 'Drill', 'Garage Grime', 'Hip-Hop', 'Jersey Club', 'R&B', 'Reggae', 'Trap', 'UK Rap', 'Other'];
 
 export default function BeatsPage() {
   const [beats, setBeats] = useState<IBeat[]>([]);

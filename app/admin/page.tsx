@@ -255,13 +255,16 @@ export default function AdminPage() {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   >
-                    <option>Drill</option>
-                    <option>UK Rap</option>
-                    <option>Jersey Club</option>
+                    <option>Afrobeats</option>
                     <option>Cinematic</option>
-                    <option>Trap</option>
-                    <option>R&B</option>
+                    <option>Drill</option>
+                    <option>Garage Grime</option>
                     <option>Hip-Hop</option>
+                    <option>Jersey Club</option>
+                    <option>R&B</option>
+                    <option>Reggae</option>
+                    <option>Trap</option>
+                    <option>UK Rap</option>
                     <option>Other</option>
                   </select>
                 </div>

@@ -36,7 +36,7 @@ const BeatSchema: Schema = new Schema(
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: ['Drill', 'UK Rap', 'Jersey Club', 'Cinematic', 'Trap', 'R&B', 'Hip-Hop', 'Other'],
+      enum: ['Afrobeats', 'Cinematic', 'Drill', 'Garage Grime', 'Hip-Hop', 'Jersey Club', 'R&B', 'Reggae', 'Trap', 'UK Rap', 'Other'],
     },
     bpm: {
       type: Number,
