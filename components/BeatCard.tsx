@@ -10,9 +10,9 @@ interface BeatCardProps {
 
 export default function BeatCard({ beat }: BeatCardProps) {
   return (
-    <Link href={`/beats/${beat._id}`} className="group">
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="relative aspect-square bg-gray-100">
+    <Link href={`/beats/${beat._id}`} className="group h-full flex">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col w-full h-full">
+        <div className="relative aspect-square bg-gray-100 flex-shrink-0">
           {beat.imageUrl ? (
             <Image
               src={beat.imageUrl}
@@ -43,15 +43,21 @@ export default function BeatCard({ beat }: BeatCardProps) {
             </div>
           )}
         </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-lg mb-1 group-hover:text-gray-600 transition-colors">
+        <div className="p-4 flex flex-col flex-1 min-h-[120px]">
+          <h3 className="font-semibold text-lg mb-1 group-hover:text-gray-600 transition-colors overflow-hidden" style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            minHeight: '3.5rem',
+            lineHeight: '1.75rem'
+          }}>
             {beat.title}
           </h3>
-          <p className="text-sm text-gray-500 mb-2">{beat.category}</p>
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>{beat.bpm} BPM • {beat.key}</span>
+          <p className="text-sm text-gray-500 mb-2 min-h-[1.25rem]">{beat.category}</p>
+          <div className="flex justify-between items-center text-sm text-gray-600 mt-auto gap-2">
+            <span className="truncate">{beat.bpm} BPM • {beat.key}</span>
             {!beat.isSold && (
-              <span className="font-bold text-black">From £{beat.mp3Price}</span>
+              <span className="font-bold text-black whitespace-nowrap flex-shrink-0">From £{beat.mp3Price}</span>
             )}
           </div>
         </div>
